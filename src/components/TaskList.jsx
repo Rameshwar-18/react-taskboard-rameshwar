@@ -1,31 +1,44 @@
 import TaskCard from './TaskCard';
 
-/** Placeholder tasks — real data/state will come in Task 2 */
-const PLACEHOLDER_TASKS = [
-  { id: 1, title: 'Design the UI layout', status: 'TODO', description: 'Create wireframes for all main views.' },
-  { id: 2, title: 'Set up API endpoints', status: 'IN PROGRESS', description: 'Define REST endpoints for task CRUD.' },
-  { id: 3, title: 'Write unit tests', status: 'DONE', description: 'Cover core business logic with tests.' },
-];
-
+/* ── Styles ─────────────────────────────────────────── */
 const listStyle = {
   display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+  gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))',
   gap: '1rem',
 };
 
+const emptyStyle = {
+  color: '#94a3b8',
+  fontStyle: 'italic',
+  padding: '1rem 0',
+};
+
+/* ── Component ──────────────────────────────────────── */
+
 /**
- * TaskList — Renders a grid of TaskCard components.
- * Props: tasks (array) — will be passed from TaskBoard once state is wired up.
+ * TaskList — renders TaskCards from props.
+ *
+ * Props:
+ *   tasks              — array of task objects from TaskBoard state
+ *   onToggleComplete(id)
+ *   onEdit(task)
+ *   onDelete(id)
  */
-function TaskList({ tasks = PLACEHOLDER_TASKS }) {
-  if (tasks.length === 0) {
-    return <p style={{ color: '#64748b' }}>No tasks yet. Add your first task!</p>;
+function TaskList({ tasks, onToggleComplete, onEdit, onDelete }) {
+  if (!tasks || tasks.length === 0) {
+    return <p style={emptyStyle}>No tasks yet. Add your first task above!</p>;
   }
 
   return (
     <div style={listStyle}>
       {tasks.map((task) => (
-        <TaskCard key={task.id} task={task} />
+        <TaskCard
+          key={task.id}
+          task={task}
+          onToggleComplete={onToggleComplete}
+          onEdit={onEdit}
+          onDelete={onDelete}
+        />
       ))}
     </div>
   );
