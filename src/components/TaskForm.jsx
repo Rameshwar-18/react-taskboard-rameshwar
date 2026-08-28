@@ -18,15 +18,26 @@ const labelStyle = {
   marginBottom: '0.4rem',
 };
 
-const inputStyle = {
+const inputStyle = (hasError) => ({
   width: '100%',
   padding: '0.55rem 0.85rem',
-  border: '1px solid #cbd5e1',
+  border: `1px solid ${hasError ? '#f87171' : '#cbd5e1'}`,
   borderRadius: '6px',
   fontSize: '0.95rem',
   color: '#1e293b',
   outline: 'none',
   boxSizing: 'border-box',
+  backgroundColor: hasError ? '#fff5f5' : '#ffffff',
+});
+
+const errorStyle = {
+  fontSize: '0.8rem',
+  color: '#dc2626',
+  fontWeight: '500',
+  marginTop: '0.35rem',
+  display: 'flex',
+  alignItems: 'center',
+  gap: '4px',
 };
 
 const rowStyle = {
@@ -64,10 +75,23 @@ const headingStyle = {
   marginBottom: '1rem',
 };
 
+/* ── Validation helper ────────────────────────────────── */
+
+/**
+ * Validates a task title.
+ * Returns an error string if invalid, or "" if valid.
+ */
+function validateTitle(value) {
+  const trimmed = value.trim();
+  if (trimmed.length === 0) return 'Title is required.';
+  if (trimmed.length < 3) return 'Title must be at least 3 characters.';
+  return '';
+}
+
 /* ── Component ────────────────────────────────────────── */
 
 /**
- * TaskForm — handles both Add and Edit modes.
+ * TaskForm — handles both Add and Edit modes with inline validation.
  *
  * Props:
  *   onAddTask(title)          — called when creating a new task
@@ -77,20 +101,42 @@ const headingStyle = {
  */
 function TaskForm({ onAddTask, onEditTask, editingTask, onCancelEdit }) {
   const [title, setTitle] = useState('');
+  const [error, setError] = useState(''); // "" means no error
 
-  // When editingTask changes, pre-fill the input with the task's current title
+  // Pre-fill the input (and clear any stale error) when editingTask changes
   useEffect(() => {
     setTitle(editingTask ? editingTask.title : '');
+    setError('');
   }, [editingTask]);
 
   const isEditing = editingTask !== null;
 
+  // ── Input change handler ──────────────────────────────
+  // Re-validate on every keystroke so the error clears as soon as the user
+  // types enough characters — no stale error messages left on screen.
+  function handleChange(e) {
+    const newValue = e.target.value;
+    setTitle(newValue);
+
+    // Only show live feedback if there is already an error visible
+    if (error) {
+      setError(validateTitle(newValue));
+    }
+  }
+
+  // ── Submit handler ────────────────────────────────────
   function handleSubmit(e) {
     e.preventDefault();
 
-    const trimmed = title.trim();
-    if (!trimmed) return; // basic guard — full validation comes in a later phase
+    // Full validation on submit — always run even if no previous error
+    const validationError = validateTitle(title);
+    if (validationError) {
+      setError(validationError);
+      return; // stop — do not create or update the task
+    }
 
+    // Valid — proceed
+    const trimmed = title.trim();
     if (isEditing) {
       onEditTask(editingTask.id, trimmed);
     } else {
@@ -98,28 +144,40 @@ function TaskForm({ onAddTask, onEditTask, editingTask, onCancelEdit }) {
     }
 
     setTitle('');
+    setError('');
   }
 
+  // ── Cancel handler ────────────────────────────────────
   function handleCancel() {
     setTitle('');
+    setError('');
     onCancelEdit();
   }
 
+  // ── Render ────────────────────────────────────────────
   return (
-    <form style={formWrapStyle} onSubmit={handleSubmit}>
+    <form style={formWrapStyle} onSubmit={handleSubmit} noValidate>
       <p style={headingStyle}>{isEditing ? '✏️ Edit Task' : '➕ Add New Task'}</p>
 
       <label htmlFor="task-title" style={labelStyle}>
         Task Title
       </label>
+
       <input
         id="task-title"
         type="text"
-        style={inputStyle}
-        placeholder="Enter task title…"
+        style={inputStyle(Boolean(error))}
+        placeholder="Enter task title… (min. 3 characters)"
         value={title}
-        onChange={(e) => setTitle(e.target.value)}
+        onChange={handleChange}
       />
+
+      {/* Inline validation error — only rendered when there is an error */}
+      {error && (
+        <p style={errorStyle} role="alert" aria-live="polite">
+          ⚠ {error}
+        </p>
+      )}
 
       <div style={rowStyle}>
         <button type="submit" style={btnPrimary}>
