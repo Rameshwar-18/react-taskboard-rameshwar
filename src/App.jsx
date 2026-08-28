@@ -9,65 +9,6 @@ const STORAGE_KEY = 'taskboard_tasks';
 const API_URL = 'https://jsonplaceholder.typicode.com/todos';
 const API_LIMIT = 15; // how many API items to seed on first visit
 
-/* ── Loading / Error UI styles ──────────────────────────────────── */
-const centeredStyle = {
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  justifyContent: 'center',
-  minHeight: '40vh',
-  gap: '0.75rem',
-  padding: '2rem',
-};
-
-const spinnerStyle = {
-  width: '40px',
-  height: '40px',
-  border: '4px solid #e2e8f0',
-  borderTop: '4px solid #4f46e5',
-  borderRadius: '50%',
-  animation: 'spin 0.8s linear infinite',
-};
-
-const loadingTextStyle = {
-  color: '#64748b',
-  fontWeight: '600',
-  fontSize: '1rem',
-};
-
-const errorCardStyle = {
-  backgroundColor: '#fff7ed',
-  border: '1px solid #fed7aa',
-  borderRadius: '10px',
-  padding: '1.5rem 2rem',
-  textAlign: 'center',
-  maxWidth: '420px',
-};
-
-const errorHeadingStyle = {
-  fontSize: '1.1rem',
-  fontWeight: '700',
-  color: '#9a3412',
-  marginBottom: '0.4rem',
-};
-
-const errorBodyStyle = {
-  color: '#c2410c',
-  fontSize: '0.9rem',
-  marginBottom: '1rem',
-};
-
-const retryBtnStyle = {
-  padding: '0.45rem 1.2rem',
-  backgroundColor: '#4f46e5',
-  color: '#fff',
-  border: 'none',
-  borderRadius: '6px',
-  fontWeight: '600',
-  fontSize: '0.88rem',
-  cursor: 'pointer',
-};
-
 /* ── localStorage helpers ───────────────────────────────────────── */
 
 /**
@@ -221,27 +162,23 @@ function App() {
   // ── Render: Loading ─────────────────────────────────────────────
   if (loading) {
     return (
-      <>
-        {/* Keyframe for the spinner — injected inline to avoid a separate CSS file */}
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-        <div style={centeredStyle}>
-          <div style={spinnerStyle} />
-          <p style={loadingTextStyle}>Loading tasks…</p>
-        </div>
-      </>
+      <div className="loading-screen" role="status" aria-live="polite">
+        <div className="loading-screen__spinner" aria-hidden="true" />
+        <p className="loading-screen__text">Loading tasks…</p>
+        <p className="loading-screen__sub">Please wait a moment.</p>
+      </div>
     );
   }
 
   // ── Render: Error ───────────────────────────────────────────────
   if (error) {
     return (
-      <div style={centeredStyle}>
-        <div style={errorCardStyle}>
-          <p style={errorHeadingStyle}>⚠️ Unable to load tasks</p>
-          <p style={errorBodyStyle}>
-            {error}
-          </p>
-          <button style={retryBtnStyle} onClick={handleRetry}>
+      <div className="error-screen">
+        <div className="error-card" role="alert">
+          <p className="error-card__icon" aria-hidden="true">⚠️</p>
+          <p className="error-card__heading">Unable to load tasks</p>
+          <p className="error-card__body">{error}<br />Please check your connection and try again.</p>
+          <button className="btn btn--primary" onClick={handleRetry}>
             🔄 Try Again
           </button>
         </div>

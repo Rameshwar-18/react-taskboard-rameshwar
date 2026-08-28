@@ -1,46 +1,42 @@
 import TaskCard from './TaskCard';
 
-/* ── Styles ─────────────────────────────────────────── */
-const listStyle = {
-  display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))',
-  gap: '1rem',
-};
-
-const emptyStyle = {
-  color: '#94a3b8',
-  fontStyle: 'italic',
-  padding: '1rem 0',
-};
-
-/* ── Component ──────────────────────────────────────── */
-
 /**
- * TaskList — renders TaskCards from props.
+ * TaskList — renders TaskCards in a responsive CSS grid.
  *
  * Props:
  *   tasks              — array of task objects from TaskBoard state
  *   onToggleComplete(id)
  *   onEdit(task)
  *   onDelete(id)
+ *
+ * Styling: index.css (.task-list, .task-list__empty, etc.)
  */
 function TaskList({ tasks, onToggleComplete, onEdit, onDelete }) {
   if (!tasks || tasks.length === 0) {
-    return <p style={emptyStyle}>No tasks yet. Add your first task above!</p>;
+    return (
+      <div className="task-list">
+        <div className="task-list__empty" role="status">
+          <span className="task-list__empty-icon" aria-hidden="true">📭</span>
+          <p className="task-list__empty-text">No tasks yet</p>
+          <p className="task-list__empty-hint">Add your first task using the form above.</p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div style={listStyle}>
+    <ul className="task-list" role="list" aria-label="Task list">
       {tasks.map((task) => (
-        <TaskCard
-          key={task.id}
-          task={task}
-          onToggleComplete={onToggleComplete}
-          onEdit={onEdit}
-          onDelete={onDelete}
-        />
+        <li key={task.id} style={{ listStyle: 'none' }}>
+          <TaskCard
+            task={task}
+            onToggleComplete={onToggleComplete}
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
+        </li>
       ))}
-    </div>
+    </ul>
   );
 }
 

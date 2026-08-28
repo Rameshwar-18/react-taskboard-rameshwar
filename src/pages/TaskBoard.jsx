@@ -2,113 +2,63 @@ import { useState } from 'react';
 import TaskForm from '../components/TaskForm';
 import TaskList from '../components/TaskList';
 
-/* ── Styles ─────────────────────────────────────────────────────── */
-const pageStyle = {
-  maxWidth: '1100px',
-  margin: '0 auto',
-  padding: '2rem 1.5rem',
-};
-
-const headingStyle = {
-  fontSize: '1.75rem',
-  fontWeight: '700',
-  color: '#1e293b',
-  marginBottom: '0.35rem',
-};
-
-const subheadingStyle = {
-  color: '#64748b',
-  marginBottom: '2rem',
-};
-
-const dividerStyle = {
-  borderTop: '1px solid #e2e8f0',
-  marginBottom: '1.5rem',
-};
-
-const sectionTitleStyle = {
-  fontSize: '1rem',
-  fontWeight: '700',
-  color: '#475569',
-  marginBottom: '1rem',
-  textTransform: 'uppercase',
-  letterSpacing: '0.05em',
-};
-
-/* ── Component ──────────────────────────────────────────────────── */
-
 /**
  * TaskBoard — route: /
  *
  * Receives shared `tasks` + `setTasks` from App (lifted state).
- * Owns: editingTask (local UI state — not needed by other routes)
- * Exposes CRUD handlers to children via props.
+ * Owns `editingTask` (local UI state — no other route needs this).
+ * Exposes all CRUD handlers to children via props.
  *
  * Props:
  *   tasks    — shared task array from App
  *   setTasks — shared setter from App
+ *
+ * Styling: index.css (.page, .section-divider, .section-label, etc.)
+ * Logic: unchanged from Task 2/3/4
  */
 function TaskBoard({ tasks, setTasks }) {
-  // editingTask is local to TaskBoard — no other route needs it
   const [editingTask, setEditingTask] = useState(null);
 
-  // ── Handlers ───────────────────────────────────────────────────
+  /* ── CRUD handlers ──────────────────────────────────────── */
 
-  /** Add a brand-new task to the list */
   function handleAddTask(title) {
-    const newTask = {
-      id: Date.now(), // unique, simple ID — no library needed
-      title,
-      completed: false,
-    };
+    const newTask = { id: Date.now(), title, completed: false };
     setTasks([...tasks, newTask]);
   }
 
-  /** Update the title of the task currently being edited */
   function handleEditTask(id, newTitle) {
-    setTasks(
-      tasks.map((task) =>
-        task.id === id ? { ...task, title: newTitle } : task
-      )
-    );
-    setEditingTask(null); // exit edit mode after saving
+    setTasks(tasks.map((t) => (t.id === id ? { ...t, title: newTitle } : t)));
+    setEditingTask(null);
   }
 
-  /** Remove a task by id — never mutates the array */
   function handleDeleteTask(id) {
-    setTasks(tasks.filter((task) => task.id !== id));
-    if (editingTask && editingTask.id === id) {
-      setEditingTask(null);
-    }
+    setTasks(tasks.filter((t) => t.id !== id));
+    if (editingTask && editingTask.id === id) setEditingTask(null);
   }
 
-  /** Toggle completed flag using map + spread */
   function handleToggleComplete(id) {
-    setTasks(
-      tasks.map((task) =>
-        task.id === id ? { ...task, completed: !task.completed } : task
-      )
-    );
+    setTasks(tasks.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)));
   }
 
-  /** Enter edit mode — pass the task object to TaskForm */
   function handleStartEdit(task) {
     setEditingTask(task);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  /** Cancel editing without saving */
   function handleCancelEdit() {
     setEditingTask(null);
   }
 
-  // ── Render ─────────────────────────────────────────────────────
-  return (
-    <main style={pageStyle}>
-      <h1 style={headingStyle}>Task Board</h1>
-      <p style={subheadingStyle}>Manage and track all your tasks in one place.</p>
+  /* ── Derived counts ─────────────────────────────────────── */
+  const completedCount = tasks.filter((t) => t.completed).length;
 
-      {/* Form: handles both Add and Edit */}
+  /* ── Render ─────────────────────────────────────────────── */
+  return (
+    <main className="page">
+      <h1 className="page__heading">Task Board</h1>
+      <p className="page__subheading">Manage and track all your tasks in one place.</p>
+
+      {/* Form — handles Add and Edit */}
       <TaskForm
         onAddTask={handleAddTask}
         onEditTask={handleEditTask}
@@ -116,12 +66,13 @@ function TaskBoard({ tasks, setTasks }) {
         onCancelEdit={handleCancelEdit}
       />
 
-      {/* Task list */}
-      <hr style={dividerStyle} />
-      <p style={sectionTitleStyle}>
-        Tasks ({tasks.length}) · {tasks.filter((t) => t.completed).length} completed
+      {/* Section header */}
+      <hr className="section-divider" />
+      <p className="section-label">
+        {tasks.length} {tasks.length === 1 ? 'task' : 'tasks'} · {completedCount} completed
       </p>
 
+      {/* Task grid */}
       <TaskList
         tasks={tasks}
         onToggleComplete={handleToggleComplete}
