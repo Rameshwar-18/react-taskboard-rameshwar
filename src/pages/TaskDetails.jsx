@@ -11,7 +11,6 @@ import { useParams, Link } from 'react-router-dom';
  *   tasks — shared task array from App
  *
  * Styling: index.css (.page--narrow, .detail-card, .not-found, etc.)
- * Logic: unchanged from Task 3
  */
 function TaskDetails({ tasks }) {
   const { id } = useParams();
@@ -27,7 +26,7 @@ function TaskDetails({ tasks }) {
       {task ? (
         /* ── Task found ── */
         <div className="detail-card">
-          <h1 className="detail-card__heading">📋 Task Details</h1>
+          <h1 className="detail-card__heading">Task Details</h1>
 
           <p className="detail-card__field-label">Title</p>
           <p className="detail-card__field-value">{task.title}</p>
@@ -40,7 +39,8 @@ function TaskDetails({ tasks }) {
                 : 'detail-card__status--incomplete'
             }`}
           >
-            {task.completed ? '✅ Completed' : '🕐 Incomplete'}
+            <span className="detail-card__status-dot" aria-hidden="true" />
+            {task.completed ? 'Completed' : 'In Progress'}
           </span>
 
           <p className="detail-card__field-label" style={{ marginTop: '1.5rem' }}>
@@ -53,7 +53,7 @@ function TaskDetails({ tasks }) {
       ) : (
         /* ── Task not found ── */
         <div className="not-found" role="alert">
-          <p className="not-found__heading">⚠️ Task not found</p>
+          <p className="not-found__heading">Task Not Found</p>
           <p className="not-found__text">
             No task with ID <strong>#{id}</strong> exists. It may have been deleted.
           </p>

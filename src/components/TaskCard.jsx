@@ -10,7 +10,6 @@ import { Link } from 'react-router-dom';
  *   onDelete(id)
  *
  * Styling: index.css (.task-card, .btn, etc.)
- * Logic: unchanged from Task 2
  */
 function TaskCard({ task, onToggleComplete, onEdit, onDelete }) {
   const cardClass = `task-card${task.completed ? ' task-card--done' : ''}`;
@@ -21,9 +20,10 @@ function TaskCard({ task, onToggleComplete, onEdit, onDelete }) {
 
   return (
     <article className={cardClass} aria-label={`Task: ${task.title}`}>
-      {/* Status badge */}
+      {/* Status badge — dot indicator + text, no emoji */}
       <span className={badgeClass}>
-        {task.completed ? '✅ Completed' : '🕐 Incomplete'}
+        <span className="task-card__badge-dot" aria-hidden="true" />
+        {task.completed ? 'Completed' : 'In Progress'}
       </span>
 
       {/* Title */}
@@ -38,7 +38,7 @@ function TaskCard({ task, onToggleComplete, onEdit, onDelete }) {
           onClick={() => onToggleComplete(task.id)}
           aria-label={task.completed ? 'Mark as incomplete' : 'Mark as complete'}
         >
-          {task.completed ? '↩ Uncomplete' : '✓ Complete'}
+          {task.completed ? 'Undo' : 'Complete'}
         </button>
 
         <button
@@ -46,7 +46,7 @@ function TaskCard({ task, onToggleComplete, onEdit, onDelete }) {
           onClick={() => onEdit(task)}
           aria-label={`Edit task: ${task.title}`}
         >
-          ✏️ Edit
+          Edit
         </button>
 
         <button
@@ -54,7 +54,7 @@ function TaskCard({ task, onToggleComplete, onEdit, onDelete }) {
           onClick={() => onDelete(task.id)}
           aria-label={`Delete task: ${task.title}`}
         >
-          🗑 Delete
+          Delete
         </button>
       </div>
 

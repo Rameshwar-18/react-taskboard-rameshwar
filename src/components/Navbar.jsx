@@ -8,7 +8,7 @@ function Navbar() {
   return (
     <nav className="navbar" aria-label="Main navigation">
       <Link to="/" className="navbar__brand">
-        📋 Task Board
+        Task Board
       </Link>
 
       <div className="navbar__links">

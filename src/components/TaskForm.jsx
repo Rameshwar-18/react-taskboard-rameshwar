@@ -23,7 +23,6 @@ function validateTitle(value) {
  *   onCancelEdit()            — called when the user cancels editing
  *
  * Styling: index.css (.task-form, .btn, etc.)
- * Validation logic: unchanged from Task 3
  */
 function TaskForm({ onAddTask, onEditTask, editingTask, onCancelEdit }) {
   const [title, setTitle] = useState('');
@@ -72,7 +71,7 @@ function TaskForm({ onAddTask, onEditTask, editingTask, onCancelEdit }) {
   return (
     <form className="task-form" onSubmit={handleSubmit} noValidate>
       <p className="task-form__title">
-        {isEditing ? '✏️ Edit task' : '➕ Add a new task'}
+        {isEditing ? 'Edit Task' : 'Add New Task'}
       </p>
 
       <label htmlFor="task-title" className="task-form__label">
@@ -83,14 +82,14 @@ function TaskForm({ onAddTask, onEditTask, editingTask, onCancelEdit }) {
         id="task-title"
         type="text"
         className={`task-form__input${error ? ' task-form__input--error' : ''}`}
-        placeholder="Enter task title… (min. 3 characters)"
+        placeholder="Enter task title... (min. 3 characters)"
         value={title}
         onChange={handleChange}
         aria-describedby={error ? 'task-title-error' : undefined}
         aria-invalid={Boolean(error)}
       />
 
-      {/* Inline validation error */}
+      {/* Inline validation error — no emoji, clean pill style */}
       {error && (
         <p
           id="task-title-error"
@@ -98,7 +97,7 @@ function TaskForm({ onAddTask, onEditTask, editingTask, onCancelEdit }) {
           role="alert"
           aria-live="polite"
         >
-          ⚠ {error}
+          {error}
         </p>
       )}
 

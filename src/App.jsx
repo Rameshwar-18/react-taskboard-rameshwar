@@ -5,9 +5,26 @@ import TaskBoard from './pages/TaskBoard';
 import TaskDetails from './pages/TaskDetails';
 
 /* ── Constants ──────────────────────────────────────────────────── */
-const STORAGE_KEY = 'taskboard_tasks';
+// v3: storage key bumped — clears v2 cache so new ENGLISH_TITLES load fresh
+const STORAGE_KEY = 'taskboard_tasks_v3';
 const API_URL = 'https://jsonplaceholder.typicode.com/todos';
-const API_LIMIT = 15; // how many API items to seed on first visit
+
+/**
+ * English task titles used to replace the Latin placeholder text returned
+ * by JSONPlaceholder. The API still provides id and completed status;
+ * only the title is overridden so the UI shows meaningful English content.
+ */
+const ENGLISH_TITLES = [
+  'Read Book',
+  'Update Resume',
+  'Complete one Devops lecture',
+  'Learn about reverse proxy',
+  'Solve LeetCode problem',
+  'Reply to 10 pending emails',
+];
+
+// Seed exactly as many tasks as there are English titles — no Latin fallback
+const API_LIMIT = ENGLISH_TITLES.length;
 
 /* ── localStorage helpers ───────────────────────────────────────── */
 
@@ -95,10 +112,12 @@ function App() {
 
         const todos = await response.json();
 
-        // Map API shape → application task shape, limit to API_LIMIT items
-        const seededTasks = todos.slice(0, API_LIMIT).map((todo) => ({
+        // Map API shape → application task shape, limit to API_LIMIT items.
+        // ENGLISH_TITLES[index] replaces the Latin placeholder text from the API;
+        // id and completed still come directly from JSONPlaceholder.
+        const seededTasks = todos.slice(0, API_LIMIT).map((todo, index) => ({
           id: todo.id,
-          title: todo.title,
+          title: ENGLISH_TITLES[index] ?? todo.title,
           completed: todo.completed,
         }));
 
@@ -140,9 +159,9 @@ function App() {
         const response = await fetch(API_URL);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const todos = await response.json();
-        const seededTasks = todos.slice(0, API_LIMIT).map((todo) => ({
+        const seededTasks = todos.slice(0, API_LIMIT).map((todo, index) => ({
           id: todo.id,
-          title: todo.title,
+          title: ENGLISH_TITLES[index] ?? todo.title,
           completed: todo.completed,
         }));
         setTasks(seededTasks);
@@ -164,7 +183,7 @@ function App() {
     return (
       <div className="loading-screen" role="status" aria-live="polite">
         <div className="loading-screen__spinner" aria-hidden="true" />
-        <p className="loading-screen__text">Loading tasks…</p>
+        <p className="loading-screen__text">Loading tasks...</p>
         <p className="loading-screen__sub">Please wait a moment.</p>
       </div>
     );
@@ -175,11 +194,10 @@ function App() {
     return (
       <div className="error-screen">
         <div className="error-card" role="alert">
-          <p className="error-card__icon" aria-hidden="true">⚠️</p>
-          <p className="error-card__heading">Unable to load tasks</p>
+          <p className="error-card__heading">Unable to Load Tasks</p>
           <p className="error-card__body">{error}<br />Please check your connection and try again.</p>
           <button className="btn btn--primary" onClick={handleRetry}>
-            🔄 Try Again
+            Try Again
           </button>
         </div>
       </div>

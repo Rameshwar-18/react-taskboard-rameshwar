@@ -16,7 +16,6 @@ function TaskList({ tasks, onToggleComplete, onEdit, onDelete }) {
     return (
       <div className="task-list">
         <div className="task-list__empty" role="status">
-          <span className="task-list__empty-icon" aria-hidden="true">📭</span>
           <p className="task-list__empty-text">No tasks yet</p>
           <p className="task-list__empty-hint">Add your first task using the form above.</p>
         </div>
