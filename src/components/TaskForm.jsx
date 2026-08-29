@@ -29,7 +29,9 @@ function TaskForm({ onAddTask, onEditTask, editingTask, onCancelEdit }) {
   const [title, setTitle] = useState('');
   const [error, setError] = useState('');
 
-  // Pre-fill the input and clear stale errors when editingTask changes
+  // Pre-fill the input and clear stale errors when editingTask changes.
+  // This effect syncs controlled form state from a prop — standard React pattern
+  // for resetting a form when the entity being edited switches.
   useEffect(() => {
     setTitle(editingTask ? editingTask.title : '');
     setError('');
