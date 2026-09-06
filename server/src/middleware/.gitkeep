@@ -1,0 +1,3 @@
+# Middleware directory
+# Reserved for Phase 2/3 (Authentication verification, request validation, error-handling middleware).
+# Middleware intercepts requests before route handlers to perform cross-cutting tasks.
