@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import taskRoutes from './routes/taskRoutes.js';
 
 const app = express();
 
@@ -14,5 +15,8 @@ app.get('/api/health', (req, res) => {
     message: 'API is running'
   });
 });
+
+// API Routes
+app.use('/api/tasks', taskRoutes);
 
 export default app;

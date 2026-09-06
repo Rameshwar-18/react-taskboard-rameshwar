@@ -1,3 +1,0 @@
-# Routes directory
-# Reserved for Phase 2 (/api/tasks routes) and Phase 3 (/api/auth routes).
-# Defines HTTP methods, endpoint paths, and connects middleware and controller handlers.
