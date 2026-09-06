@@ -2,7 +2,7 @@
 
 ## Overview
 
-This repository houses the Node.js + Express backend service for the **WeVerve Systems Full Stack Intern Task Board application**. It provides a robust, RESTful API architecture built with MongoDB and Mongoose, designed to support task management and user authentication for the Task Board client.
+This repository houses the Node.js + Express backend service for the **WeVerve Systems Full Stack Intern Task Board application**. It provides a robust, RESTful API architecture built with **MongoDB Atlas** and **Mongoose**, designed to support task management and user workflows for the Task Board client.
 
 ---
 
@@ -10,7 +10,8 @@ This repository houses the Node.js + Express backend service for the **WeVerve S
 
 - **Runtime:** [Node.js](https://nodejs.org) (v18+)
 - **Framework:** [Express.js](https://expressjs.com) (v4)
-- **Database:** [MongoDB](https://www.mongodb.com)
+- **Database:** [MongoDB Atlas](https://www.mongodb.com/atlas)
+  - **Database Name:** `taskboard`
 - **ODM:** [Mongoose](https://mongoosejs.com) (v8)
 - **Language & Modules:** JavaScript (ES Modules, `"type": "module"`)
 - **Development Tooling:** [Nodemon](https://nodemon.io), `dotenv`, `cors`
@@ -23,13 +24,15 @@ This repository houses the Node.js + Express backend service for the **WeVerve S
 server/
 ├── src/
 │   ├── config/
-│   │   └── db.js            # Reusable MongoDB connection using Mongoose
-│   ├── controllers/         # (Reserved for Phase 2/3: task & auth controllers)
-│   ├── middleware/          # (Reserved for Phase 2/3: auth & error handling)
-│   ├── models/              # (Reserved for Phase 2: Task & User Mongoose models)
-│   ├── routes/              # (Reserved for Phase 2/3: Express route definitions)
+│   │   └── db.js            # MongoDB Atlas connection utility using Mongoose
+│   ├── controllers/         # (Reserved for upcoming phases: task & auth controllers)
+│   ├── middleware/          # (Reserved for upcoming phases: auth & error handling)
+│   ├── models/              # Mongoose data models
+│   │   ├── User.js          # User model schema & validation
+│   │   └── Task.js          # Task model schema & validation
+│   ├── routes/              # (Reserved for upcoming phases: Express route definitions)
 │   ├── app.js               # Express application configuration and middleware
-│   └── server.js            # Server entry point (env load -> DB connect -> listen)
+│   └── server.js            # Server entry point (env load -> Atlas connect -> listen)
 ├── .env                     # Environment variables (git-ignored)
 ├── .env.example             # Template for required environment variables
 ├── .gitignore               # Server-specific ignore rules
@@ -39,11 +42,48 @@ server/
 
 ### Folder Purpose for Upcoming Phases
 
-- **`src/config/`**: Holds configuration modules, starting with database connection setup (`db.js`).
-- **`src/controllers/`**: Will contain business logic handlers for incoming HTTP requests (Task CRUD in Phase 2, Auth in Phase 3).
-- **`src/middleware/`**: Will hold custom middleware including JWT authentication verification, input validation, and centralized error handling.
-- **`src/models/`**: Will define Mongoose schemas and data models for persistent collections (User and Task).
+- **`src/config/`**: Holds configuration modules, including database connection setup (`db.js`).
+- **`src/controllers/`**: Will contain business logic handlers for incoming HTTP requests (Task CRUD, Auth).
+- **`src/middleware/`**: Will hold custom middleware including authentication verification, input validation, and centralized error handling.
+- **`src/models/`**: Defines persistent Mongoose models (`User.js` and `Task.js`).
 - **`src/routes/`**: Will define Express routers mapping API endpoints to controller actions.
+
+---
+
+## Database & Models
+
+The application connects to **MongoDB Atlas** targeting the `taskboard` database.
+
+### 1. User Model (`server/src/models/User.js`)
+
+Represents registered users of the Task Board.
+
+| Field | Type | Rules | Description |
+|---|---|---|---|
+| `name` | `String` | Required, Trimmed | User's full or display name |
+| `email` | `String` | Required, Unique, Lowercase, Trimmed | Unique user email address |
+| `password` | `String` | Required, Trimmed | Account password |
+| `createdAt` | `Date` | Default: `Date.now` | Account creation timestamp |
+
+### 2. Task Model (`server/src/models/Task.js`)
+
+Represents individual tasks created and managed by users.
+
+| Field | Type | Rules | Description |
+|---|---|---|---|
+| `title` | `String` | Required, Trimmed, Min length: 3 | Task title description |
+| `completed` | `Boolean` | Default: `false` | Task completion status flag |
+| `userId` | `ObjectId` | Required, `ref: "User"` | References the User who owns this task |
+| `createdAt` | `Date` | Default: `Date.now` | Task creation timestamp |
+
+### 3. User → Tasks Relationship
+
+```
+User (1) ────────< (Many) Task
+```
+
+- Each **Task** belongs to exactly one **User** via the `userId` field referencing the `User` collection.
+- A **User** can have multiple associated tasks.
 
 ---
 
@@ -70,7 +110,7 @@ Configure the environment variables in `.env`:
 
 ```env
 PORT=5000
-MONGODB_URI=mongodb://127.0.0.1:27017/taskboard
+MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/taskboard?retryWrites=true&w=majority
 ```
 
 > **Note:** Never commit your `.env` file to version control. Keep database credentials private.
@@ -112,40 +152,17 @@ To verify that the API server is active and reachable:
 
 ---
 
-## Planned Data Models (Upcoming Phase)
-
-### 1. User Model
-- **`name`**: String (required)
-- **`email`**: String (required, unique)
-- **`password`**: String (hashed with bcrypt in Phase 3)
-- **`createdAt`**: Date (timestamp)
-
-### 2. Task Model
-- **`title`**: String (required, validated)
-- **`completed`**: Boolean (default: `false`)
-- **`userId`**: ObjectId (references `User` model; establishing that each **Task belongs to a User**)
-- **`createdAt`**: Date (timestamp)
-
----
-
 ## Planned API Architecture (Upcoming Phases)
 
 ### Tasks Endpoints (`/api/tasks`)
 
 | Method | Endpoint | Description | Status |
 |---|---|---|---|
-| `GET` | `/api/tasks` | Retrieve all tasks for the authenticated user | *Planned (Phase 2)* |
-| `GET` | `/api/tasks/:id` | Retrieve a single task by ID | *Planned (Phase 2)* |
-| `POST` | `/api/tasks` | Create a new task | *Planned (Phase 2)* |
-| `PATCH` | `/api/tasks/:id` | Update task title / properties | *Planned (Phase 2)* |
-| `PATCH` | `/api/tasks/:id/complete` | Toggle completion status of a task | *Planned (Phase 2)* |
-| `DELETE` | `/api/tasks/:id` | Delete a task | *Planned (Phase 2)* |
-
-### Authentication Endpoints (`/api/auth`)
-
-| Method | Endpoint | Description | Status |
-|---|---|---|---|
-| `POST` | `/api/auth/register` | Register a new user account | *Planned (Phase 3)* |
-| `POST` | `/api/auth/login` | Authenticate user and issue JWT token | *Planned (Phase 3)* |
+| `GET` | `/api/tasks` | Retrieve all tasks for the user | *Planned* |
+| `GET` | `/api/tasks/:id` | Retrieve a single task by ID | *Planned* |
+| `POST` | `/api/tasks` | Create a new task | *Planned* |
+| `PATCH` | `/api/tasks/:id` | Update task title / properties | *Planned* |
+| `PATCH` | `/api/tasks/:id/complete` | Toggle completion status of a task | *Planned* |
+| `DELETE` | `/api/tasks/:id` | Delete a task | *Planned* |
 
 *Note: Task CRUD and authentication endpoints will be implemented in subsequent phases.*

@@ -1,3 +1,0 @@
-# Models directory
-# Reserved for Phase 2 (Task and User Mongoose schemas and models).
-# Defines schema validation, data structures, and relationships (Task belongs to User).
