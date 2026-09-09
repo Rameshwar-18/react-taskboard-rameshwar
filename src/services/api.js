@@ -3,7 +3,14 @@
  * Centralizes all HTTP communication with the Express/MongoDB Atlas backend.
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+function getApiBaseUrl() {
+  const url = import.meta.env.VITE_API_BASE_URL;
+  if (!url) {
+    console.error('FATAL: VITE_API_BASE_URL environment variable is not defined.');
+    throw new Error('Configuration error: VITE_API_BASE_URL environment variable is not defined.');
+  }
+  return url;
+}
 
 /**
  * Reusable HTTP request helper
@@ -13,7 +20,8 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000
  * @returns {Promise<any>}  - parsed JSON data
  */
 async function request(endpoint, { method = 'GET', body, token, headers = {} } = {}) {
-  const url = `${API_BASE_URL}${endpoint}`;
+  const baseUrl = getApiBaseUrl();
+  const url = `${baseUrl}${endpoint}`;
 
   const requestHeaders = {
     ...headers,
