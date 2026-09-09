@@ -1,33 +1,14 @@
 import mongoose from 'mongoose';
 import Task from '../models/Task.js';
-import User from '../models/User.js';
 
 /**
- * Temporary development helper to ensure a valid User document exists for tasks.
- * Preserves the required Task.userId reference to User without accepting untrusted client input.
- * TODO: Replace with req.user.id once JWT authentication is implemented in Phase 4.
- */
-const getDevUserId = async () => {
-  let devUser = await User.findOne({ email: 'dev@taskboard.local' });
-  if (!devUser) {
-    devUser = await User.create({
-      name: 'Development User',
-      email: 'dev@taskboard.local',
-      password: 'devpassword123'
-    });
-  }
-  return devUser._id;
-};
-
-/**
- * @desc   Get all tasks
+ * @desc   Get all tasks for the authenticated user
  * @route  GET /api/tasks
- * @access Public (Temporary in Phase 3 - will be user-scoped in Phase 4)
+ * @access Private
  */
 export const getTasks = async (req, res) => {
   try {
-    // TODO: In Phase 4/Auth phase, scope to authenticated user: { userId: req.user.id }
-    const tasks = await Task.find().sort({ createdAt: -1 });
+    const tasks = await Task.find({ userId: req.user.id }).sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
@@ -43,9 +24,9 @@ export const getTasks = async (req, res) => {
 };
 
 /**
- * @desc   Get single task by ID
+ * @desc   Get single task by ID (scoped to authenticated user)
  * @route  GET /api/tasks/:id
- * @access Public
+ * @access Private
  */
 export const getTaskById = async (req, res) => {
   try {
@@ -58,7 +39,10 @@ export const getTaskById = async (req, res) => {
       });
     }
 
-    const task = await Task.findById(id);
+    const task = await Task.findOne({
+      _id: id,
+      userId: req.user.id
+    });
 
     if (!task) {
       return res.status(404).json({
@@ -80,9 +64,9 @@ export const getTaskById = async (req, res) => {
 };
 
 /**
- * @desc   Create a new task
+ * @desc   Create a new task for the authenticated user
  * @route  POST /api/tasks
- * @access Public (Temporary development ownership strategy)
+ * @access Private
  */
 export const createTask = async (req, res) => {
   try {
@@ -95,13 +79,9 @@ export const createTask = async (req, res) => {
       });
     }
 
-    // Assign development user ID to satisfy Task.userId schema requirement
-    // TODO: Replace with req.user.id in authentication phase
-    const userId = await getDevUserId();
-
     const task = await Task.create({
       title: title.trim(),
-      userId
+      userId: req.user.id
     });
 
     res.status(201).json({
@@ -117,9 +97,9 @@ export const createTask = async (req, res) => {
 };
 
 /**
- * @desc   Update task (title and/or completed)
+ * @desc   Update task (scoped to authenticated user)
  * @route  PATCH /api/tasks/:id
- * @access Public
+ * @access Private
  */
 export const updateTask = async (req, res) => {
   try {
@@ -163,10 +143,18 @@ export const updateTask = async (req, res) => {
       updates.completed = completed;
     }
 
-    const task = await Task.findByIdAndUpdate(id, updates, {
-      new: true,
-      runValidators: true
-    });
+    // Strictly forbid updating _id, userId, or createdAt
+    const task = await Task.findOneAndUpdate(
+      {
+        _id: id,
+        userId: req.user.id
+      },
+      updates,
+      {
+        new: true,
+        runValidators: true
+      }
+    );
 
     if (!task) {
       return res.status(404).json({
@@ -188,9 +176,9 @@ export const updateTask = async (req, res) => {
 };
 
 /**
- * @desc   Toggle task completion status
+ * @desc   Toggle task completion status (scoped to authenticated user)
  * @route  PATCH /api/tasks/:id/complete
- * @access Public
+ * @access Private
  */
 export const toggleComplete = async (req, res) => {
   try {
@@ -203,7 +191,10 @@ export const toggleComplete = async (req, res) => {
       });
     }
 
-    const task = await Task.findById(id);
+    const task = await Task.findOne({
+      _id: id,
+      userId: req.user.id
+    });
 
     if (!task) {
       return res.status(404).json({
@@ -228,9 +219,9 @@ export const toggleComplete = async (req, res) => {
 };
 
 /**
- * @desc   Delete task
+ * @desc   Delete task (scoped to authenticated user)
  * @route  DELETE /api/tasks/:id
- * @access Public
+ * @access Private
  */
 export const deleteTask = async (req, res) => {
   try {
@@ -243,7 +234,10 @@ export const deleteTask = async (req, res) => {
       });
     }
 
-    const task = await Task.findByIdAndDelete(id);
+    const task = await Task.findOneAndDelete({
+      _id: id,
+      userId: req.user.id
+    });
 
     if (!task) {
       return res.status(404).json({

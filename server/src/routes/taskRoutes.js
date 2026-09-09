@@ -1,4 +1,5 @@
 import express from 'express';
+import authMiddleware from '../middleware/authMiddleware.js';
 import {
   getTasks,
   getTaskById,
@@ -9,6 +10,9 @@ import {
 } from '../controllers/taskController.js';
 
 const router = express.Router();
+
+// Apply authMiddleware to all task routes
+router.use(authMiddleware);
 
 router.route('/')
   .get(getTasks)
