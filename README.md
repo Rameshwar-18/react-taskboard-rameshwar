@@ -1,79 +1,122 @@
-# React Task Board
+# React Task Board — Full Stack Application
 
 ## Overview
 
-A React Task Board application built for the **WeVerve Full Stack Intern practical assignment**. The app allows users to create, manage, and track tasks through a clean, professional interface. It seeds initial data from the [JSONPlaceholder](https://jsonplaceholder.typicode.com) API and persists all user changes to `localStorage`.
+A modern, full-stack Task Board web application built for the **WeVerve Full Stack Intern practical assignment**. The application features secure user authentication (registration, login, bcrypt password hashing, JWT session management) and user-scoped task management backed by a **Node.js + Express** REST API and **MongoDB Atlas**.
 
 ---
 
-## Features
+## Architecture & Tech Stack
 
-- **Create tasks** — Add new tasks with validated titles
-- **Edit tasks** — Update an existing task's title inline
-- **Delete tasks** — Remove tasks permanently
-- **Mark tasks complete** — Toggle task completion status with a colour-coded dot indicator
-- **Task Details route** — Dedicated `/task/:id` page per task
-- **API seed data** — First 15 tasks fetched from JSONPlaceholder on first visit
-- **Loading state** — Animated spinner shown while fetching
-- **API error state** — Error message with a Retry button
-- **Form validation** — Title required; minimum 3 non-whitespace characters; inline errors
-- **localStorage persistence** — All changes survive page refresh
-- **Responsive UI** — Designed for desktop (1440px+), tablet (768px), and mobile (375px)
-- **Professional design** — Blue and white colour palette, no emoji, CSS dot indicators for task status
+### Frontend
+- **Framework:** [React 19](https://react.dev) + [Vite 8](https://vite.dev)
+- **Routing:** [React Router v7](https://reactrouter.com)
+- **State Management:** React Context (`AuthContext`) for authentication state; component-level API data fetching for tasks
+- **Styling:** Vanilla CSS with custom property tokens in `src/index.css` (professional blue & white palette, responsive layout, accessible forms)
+- **Session Persistence:** `localStorage` is used **exclusively** for the user's JWT token and basic profile info (`token`, `user`). Tasks are **never** stored in localStorage.
 
----
-
-## Tech Stack
-
-| Technology | Purpose |
-|---|---|
-| [React 19](https://react.dev) | UI components and state management |
-| [Vite 8](https://vite.dev) | Development server and production build |
-| [React Router v7](https://reactrouter.com) | Client-side routing |
-| JavaScript (ES Modules) | Application logic |
-| Vanilla CSS | Styling, design tokens, responsive layout |
-| Browser `localStorage` | Client-side task persistence |
-| [JSONPlaceholder API](https://jsonplaceholder.typicode.com/todos) | Seed data on first load |
+### Backend
+- **Runtime & Framework:** [Node.js](https://nodejs.org) (ES Modules) + [Express.js](https://expressjs.com)
+- **Database:** [MongoDB Atlas](https://www.mongodb.com/atlas) with [Mongoose 8](https://mongoosejs.com) ODM
+- **Security & Auth:** [bcryptjs](https://www.npmjs.com/package/bcryptjs) (10 salt rounds), [jsonwebtoken](https://www.npmjs.com/package/jsonwebtoken) (JWT)
+- **Authorization:** `authMiddleware` verifying `Authorization: Bearer <token>` on all `/api/tasks` endpoints
+- **Data Isolation:** All database operations are strictly scoped to the authenticated user (`req.user.id`).
 
 ---
 
 ## Project Structure
 
 ```
-src/
-├── components/
-│   ├── Navbar.jsx        # Sticky top navigation bar
-│   ├── TaskForm.jsx      # Add / Edit form with inline validation
-│   ├── TaskList.jsx      # Responsive grid of TaskCards
-│   └── TaskCard.jsx      # Single task card with action buttons
+react-taskboard-rameshwar/
+├── server/                          # Backend Express + MongoDB service
+│   ├── src/
+│   │   ├── config/db.js             # MongoDB Atlas connection setup
+│   │   ├── controllers/
+│   │   │   ├── authController.js    # Registration and login logic
+│   │   │   └── taskController.js    # Authenticated, user-scoped Task CRUD logic
+│   │   ├── middleware/
+│   │   │   └── authMiddleware.js    # JWT verification & req.user attachment
+│   │   ├── models/
+│   │   │   ├── User.js              # User Mongoose schema (bcrypt password)
+│   │   │   └── Task.js              # Task schema with userId ref to User
+│   │   ├── routes/
+│   │   │   ├── authRoutes.js        # /api/auth routes
+│   │   │   └── taskRoutes.js        # /api/tasks protected routes
+│   │   ├── app.js                   # Express application setup and routes
+│   │   └── server.js                # Server entry point
+│   ├── .env.example                 # Template for backend environment variables
+│   └── README.md                    # Detailed backend API documentation
 │
-├── pages/
-│   ├── TaskBoard.jsx     # Route: / — CRUD orchestration
-│   └── TaskDetails.jsx   # Route: /task/:id — read-only task detail view
-│
-├── App.jsx               # Root — state, API fetch, localStorage, routing
-├── main.jsx              # React DOM entry point
-└── index.css             # Global design system and component styles
+├── src/                             # Frontend React application
+│   ├── components/
+│   │   ├── Navbar.jsx               # Navigation bar with auth status and logout
+│   │   ├── ProtectedRoute.jsx       # Route guard for authenticated paths
+│   │   ├── TaskCard.jsx             # Individual task display card
+│   │   ├── TaskForm.jsx             # Task creation and inline edit form
+│   │   └── TaskList.jsx             # Responsive grid of TaskCards
+│   ├── context/
+│   │   ├── AuthContext.jsx          # AuthProvider managing token and user
+│   │   └── useAuth.js               # useAuth hook
+│   ├── pages/
+│   │   ├── Login.jsx                # User sign-in page
+│   │   ├── Register.jsx             # User registration page
+│   │   ├── TaskBoard.jsx            # Main dashboard view (route: /)
+│   │   └── TaskDetails.jsx          # Task details view (route: /task/:id)
+│   ├── services/
+│   │   └── api.js                   # Centralized API service for auth and tasks
+│   ├── App.jsx                      # Root router configuration
+│   ├── main.jsx                     # DOM root
+│   └── index.css                    # Professional design system styles
+├── .env.example                     # Template for frontend environment variables
+├── package.json                     # Frontend scripts and dependencies
+└── README.md                        # Full project overview
 ```
 
 ---
 
-## Getting Started
+## Environment Setup
 
-### Prerequisites
+### 1. Backend Environment (`server/.env`)
 
-- [Node.js](https://nodejs.org) v18 or later
-- npm (comes with Node.js)
+Copy `server/.env.example` to `server/.env`:
 
-### Install dependencies
+```env
+PORT=5000
+MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/taskboard?retryWrites=true&w=majority
+JWT_SECRET=your-secure-random-secret-key
+JWT_EXPIRES_IN=7d
+```
+
+### 2. Frontend Environment (`.env`)
+
+Copy `.env.example` to `.env` in the root directory:
+
+```env
+VITE_API_BASE_URL=http://localhost:5000/api
+```
+
+> **Note:** The frontend environment contains only the public API URL. Never place database credentials or JWT secrets in frontend files.
+
+---
+
+## Running the Application
+
+### 1. Start the Backend Server
+
+```bash
+cd server
+npm install
+npm run dev
+```
+
+The Express API will listen on `http://localhost:5000`.
+
+### 2. Start the Frontend Development Server
+
+In the project root:
 
 ```bash
 npm install
-```
-
-### Run the development server
-
-```bash
 npm run dev
 ```
 
@@ -81,103 +124,50 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ---
 
-## Build
+## Authentication & API Flow
 
-To create an optimised production bundle:
+```
+1. REGISTER
+   Client (Register.jsx) -> POST /api/auth/register -> bcrypt hash -> MongoDB Atlas -> Redirect to /login
+
+2. LOGIN
+   Client (Login.jsx) -> POST /api/auth/login -> bcrypt.compare -> Issue JWT -> Client stores token in localStorage -> Redirect to /
+
+3. PROTECTED REQUESTS
+   Client (TaskBoard / TaskDetails) -> GET/POST/PATCH/DELETE /api/tasks
+   Headers: Authorization: Bearer <token>
+   -> authMiddleware verifies JWT -> req.user.id -> MongoDB Atlas queries scoped by { userId: req.user.id }
+   -> Returns only the authenticated user's tasks
+```
+
+### Client-Side Route Protection
+
+- `/login` — Public sign-in page
+- `/register` — Public registration page
+- `/` — **Protected** Task Board. Redirects unauthenticated visitors to `/login`.
+- `/task/:id` — **Protected** Task Details. Redirects unauthenticated visitors to `/login`. Displays a 404 state if the task does not exist or belongs to another user.
+
+---
+
+## Task Management (MongoDB Atlas)
+
+- **Create Task:** `POST /api/tasks` (Client sends `{ title }`, backend assigns `userId: req.user.id`)
+- **Get Tasks:** `GET /api/tasks` (Returns array of tasks for current user)
+- **Get Task By ID:** `GET /api/tasks/:id` (Returns single task if owned by user, otherwise 404)
+- **Update Task:** `PATCH /api/tasks/:id` (Updates title and/or completed)
+- **Toggle Complete:** `PATCH /api/tasks/:id/complete` (Toggles boolean status)
+- **Delete Task:** `DELETE /api/tasks/:id` (Permanently deletes user's task)
+
+All tasks survive page refreshes and browser restarts because they are stored in MongoDB Atlas. `localStorage` is **never** used as a task data store.
+
+---
+
+## Building for Production
 
 ```bash
+# Build frontend bundle
 npm run build
+
+# Run lint checks
+npm run lint
 ```
-
-Output is written to the `dist/` folder. Preview the production build locally with:
-
-```bash
-npm run preview
-```
-
----
-
-## How It Works
-
-### Initial data
-
-On the **first visit** (no data in `localStorage`), the app fetches the first 15 todos from `https://jsonplaceholder.typicode.com/todos`. The `id` and `completed` fields come from the API; titles are mapped to English task descriptions. Tasks are saved to `localStorage` immediately so subsequent visits skip the API call entirely.
-
-```js
-{ id, title, completed }
-```
-
-### Persistence
-
-All task changes (add, edit, delete, toggle) are written to `localStorage` under the key `taskboard_tasks_v2`. The app reads this key on startup. If the stored value is corrupted or missing, it clears the key and falls back to a fresh API fetch.
-
-### State management
-
-React `useState` holds the task array as a single source of truth inside `App`. State is lifted so both the Task Board and Task Details routes share the same live data. `useEffect` coordinates the one-time startup load and the per-change persistence write.
-
-### Routing
-
-| Path | Component | Description |
-|---|---|---|
-| `/` | `TaskBoard` | Task grid and Add / Edit form |
-| `/task/:id` | `TaskDetails` | Read-only detail view for a single task |
-
-Navigating to a non-existent ID (e.g. `/task/999999`) renders a Task Not Found message.
-
-### Validation
-
-Task titles are validated on submit and on change (once the user has attempted a submission):
-
-| Input | Result |
-|---|---|
-| Empty (`""`) | Title is required. |
-| Whitespace only (`"   "`) | Title is required. |
-| 1 or 2 characters | Title must be at least 3 characters. |
-| 3 or more characters | Accepted |
-
-Validation runs in both Add and Edit mode. Invalid submissions never modify the task list.
-
-### Design
-
-The UI uses a professional blue and white colour palette. Status is communicated through CSS dot indicators (blue for In Progress, green for Completed), text labels, and card border colours — no emoji. The design system is defined entirely through CSS custom properties in `index.css`.
-
----
-
-## Screenshots
-
-> Screenshots will be added before final submission.
-
----
-
-## Approach
-
-### Component architecture
-
-State is lifted to `App` so the task array is the single source of truth. `TaskBoard` owns only local UI state (`editingTask`). `TaskDetails` is a pure read-only consumer. All CRUD handlers are defined in `TaskBoard` and passed down via props, keeping child components simple and callback-driven.
-
-### API and persistence guard
-
-A boolean `initialized` flag prevents the persistence `useEffect` from writing an empty array to `localStorage` before the initial API response arrives, ensuring seed data is never silently discarded.
-
-### Accessibility
-
-- Inputs have explicit `<label>` elements with `htmlFor`
-- Invalid inputs expose `aria-invalid` and `aria-describedby`
-- The loading screen uses `role="status"` and `aria-live="polite"`
-- The error screen and task-not-found box use `role="alert"`
-- All buttons have descriptive `aria-label` attributes
-- Task status is communicated via dot indicator, text label, and visual styling — not colour alone
-- All interactive elements have visible `:focus-visible` outlines
-
-### Styling
-
-A CSS custom-properties design system in `index.css` defines all colour, spacing, shadow, and radius tokens. Components consume tokens; no ad-hoc inline styles. Responsive breakpoints at `768px` and `480px` handle tablet and mobile layouts.
-
----
-
-## Known Limitations
-
-- The JSONPlaceholder API is used only for initial seed data. The app does not POST, PATCH, or DELETE to any backend.
-- Tasks are stored in browser `localStorage` and are local to the device and browser profile.
-- There is no user authentication or multi-user support.
-- Changes made in one browser tab are not reflected in another without a page reload.

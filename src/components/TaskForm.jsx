@@ -14,57 +14,75 @@ function validateTitle(value) {
 
 /* ── Component ──────────────────────────────────────────────────── */
 /**
- * TaskForm — handles both Add and Edit modes with inline validation.
+ * TaskForm — handles both Add and Edit modes with inline validation and async state.
  *
  * Props:
- *   onAddTask(title)          — called when creating a new task
- *   onEditTask(id, newTitle)  — called when saving an edited task
+ *   onAddTask(title)          — async function to create a new task
+ *   onEditTask(id, newTitle)  — async function to update an existing task
  *   editingTask               — task object being edited, or null
- *   onCancelEdit()            — called when the user cancels editing
- *
- * Styling: index.css (.task-form, .btn, etc.)
+ *   onCancelEdit()            — function to cancel edit mode
+ *   isSubmitting              — (optional) external loading state
  */
-function TaskForm({ onAddTask, onEditTask, editingTask, onCancelEdit }) {
+function TaskForm({ onAddTask, onEditTask, editingTask, onCancelEdit, isSubmitting: externalSubmitting = false }) {
   const [title, setTitle] = useState('');
-  const [error, setError] = useState('');
+  const [validationError, setValidationError] = useState('');
+  const [formApiError, setFormApiError] = useState('');
+  const [internalSubmitting, setInternalSubmitting] = useState(false);
 
-  // Pre-fill the input and clear stale errors when editingTask changes.
-  // This effect syncs controlled form state from a prop — standard React pattern
-  // for resetting a form when the entity being edited switches.
+  const isSubmitting = externalSubmitting || internalSubmitting;
+
   useEffect(() => {
     setTitle(editingTask ? editingTask.title : '');
-    setError('');
+    setValidationError('');
+    setFormApiError('');
   }, [editingTask]);
 
   const isEditing = editingTask !== null;
 
-  // Live re-validation: clear error as soon as input becomes valid
   function handleChange(e) {
     const newValue = e.target.value;
     setTitle(newValue);
-    if (error) setError(validateTitle(newValue));
+    if (validationError) {
+      setValidationError(validateTitle(newValue));
+    }
+    if (formApiError) {
+      setFormApiError('');
+    }
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    const validationError = validateTitle(title);
-    if (validationError) {
-      setError(validationError);
+    setFormApiError('');
+
+    const error = validateTitle(title);
+    if (error) {
+      setValidationError(error);
       return;
     }
+
     const trimmed = title.trim();
-    if (isEditing) {
-      onEditTask(editingTask.id, trimmed);
-    } else {
-      onAddTask(trimmed);
+    setInternalSubmitting(true);
+
+    try {
+      if (isEditing) {
+        const taskId = editingTask._id || editingTask.id;
+        await onEditTask(taskId, trimmed);
+      } else {
+        await onAddTask(trimmed);
+      }
+      setTitle('');
+      setValidationError('');
+    } catch (err) {
+      setFormApiError(err.message || 'Operation failed. Please try again.');
+    } finally {
+      setInternalSubmitting(false);
     }
-    setTitle('');
-    setError('');
   }
 
   function handleCancel() {
     setTitle('');
-    setError('');
+    setValidationError('');
+    setFormApiError('');
     onCancelEdit();
   }
 
@@ -74,6 +92,16 @@ function TaskForm({ onAddTask, onEditTask, editingTask, onCancelEdit }) {
         {isEditing ? 'Edit Task' : 'Add New Task'}
       </p>
 
+      {formApiError && (
+        <div
+          className="task-form__error"
+          style={{ marginBottom: '1rem' }}
+          role="alert"
+        >
+          {formApiError}
+        </div>
+      )}
+
       <label htmlFor="task-title" className="task-form__label">
         Task Title
       </label>
@@ -81,29 +109,39 @@ function TaskForm({ onAddTask, onEditTask, editingTask, onCancelEdit }) {
       <input
         id="task-title"
         type="text"
-        className={`task-form__input${error ? ' task-form__input--error' : ''}`}
+        className={`task-form__input${validationError ? ' task-form__input--error' : ''}`}
         placeholder="Enter task title... (min. 3 characters)"
         value={title}
         onChange={handleChange}
-        aria-describedby={error ? 'task-title-error' : undefined}
-        aria-invalid={Boolean(error)}
+        disabled={isSubmitting}
+        aria-describedby={validationError ? 'task-title-error' : undefined}
+        aria-invalid={Boolean(validationError)}
       />
 
-      {/* Inline validation error — no emoji, clean pill style */}
-      {error && (
+      {validationError && (
         <p
           id="task-title-error"
           className="task-form__error"
           role="alert"
           aria-live="polite"
         >
-          {error}
+          {validationError}
         </p>
       )}
 
       <div className="task-form__actions">
-        <button type="submit" className="btn btn--primary">
-          {isEditing ? 'Save Changes' : 'Add Task'}
+        <button
+          type="submit"
+          className="btn btn--primary"
+          disabled={isSubmitting}
+        >
+          {isSubmitting
+            ? isEditing
+              ? 'Saving...'
+              : 'Adding...'
+            : isEditing
+            ? 'Save Changes'
+            : 'Add Task'}
         </button>
 
         {isEditing && (
@@ -111,6 +149,7 @@ function TaskForm({ onAddTask, onEditTask, editingTask, onCancelEdit }) {
             type="button"
             className="btn btn--secondary"
             onClick={handleCancel}
+            disabled={isSubmitting}
           >
             Cancel
           </button>

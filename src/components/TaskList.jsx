@@ -8,10 +8,9 @@ import TaskCard from './TaskCard';
  *   onToggleComplete(id)
  *   onEdit(task)
  *   onDelete(id)
- *
- * Styling: index.css (.task-list, .task-list__empty, etc.)
+ *   actionLoadingId    — ID of task currently undergoing a mutation
  */
-function TaskList({ tasks, onToggleComplete, onEdit, onDelete }) {
+function TaskList({ tasks, onToggleComplete, onEdit, onDelete, actionLoadingId }) {
   if (!tasks || tasks.length === 0) {
     return (
       <div className="task-list">
@@ -25,16 +24,20 @@ function TaskList({ tasks, onToggleComplete, onEdit, onDelete }) {
 
   return (
     <ul className="task-list" role="list" aria-label="Task list">
-      {tasks.map((task) => (
-        <li key={task.id} style={{ listStyle: 'none' }}>
-          <TaskCard
-            task={task}
-            onToggleComplete={onToggleComplete}
-            onEdit={onEdit}
-            onDelete={onDelete}
-          />
-        </li>
-      ))}
+      {tasks.map((task) => {
+        const taskId = task._id || task.id;
+        return (
+          <li key={taskId} style={{ listStyle: 'none' }}>
+            <TaskCard
+              task={task}
+              onToggleComplete={onToggleComplete}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              isActionLoading={actionLoadingId === taskId}
+            />
+          </li>
+        );
+      })}
     </ul>
   );
 }
