@@ -85,6 +85,7 @@ PORT=5000
 MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/taskboard?retryWrites=true&w=majority
 JWT_SECRET=your-secure-random-secret-key
 JWT_EXPIRES_IN=7d
+CLIENT_ORIGIN=http://localhost:5173,https://react-taskboard-rameshwar.vercel.app
 ```
 
 ### 2. Frontend Environment (`.env`)
@@ -171,3 +172,12 @@ npm run build
 # Run lint checks
 npm run lint
 ```
+
+---
+
+## Known Limitations
+
+1. **No Refresh Tokens:** By design for this stage of the project, authentication relies on standard single-token JWTs stored in `localStorage`. When the JWT expires (or if the secret changes), the frontend handles the resulting `401 Unauthorized` by clearing the session and redirecting the user to `/login`. Refresh token rotation is not implemented.
+2. **Backend Cloud Deployment Pending:** The Node.js Express server runs locally by default (`http://localhost:5000`). While the frontend is deployed to Vercel, the production Vercel frontend requires `VITE_API_BASE_URL` to be configured in Vercel Project Settings pointing to a deployed backend instance (e.g., on Render or Railway).
+3. **No Task Pagination:** All tasks owned by the authenticated user are retrieved in a single request ordered by `createdAt` descending. For enterprise workloads with thousands of tasks, cursor-based pagination would be a recommended future enhancement.
+
