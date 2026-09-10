@@ -181,15 +181,16 @@ npm run lint
 │   https://react-taskboard-rameshwar.vercel.app          │
 └──────────────────────────┬──────────────────────────────┘
                            │
-                           │ HTTPS requests (Bearer JWT)
-                           │ VITE_API_BASE_URL
+                           │ Relative /api/* requests (Bearer JWT)
+                           │ VITE_API_BASE_URL=/api
                            ▼
 ┌─────────────────────────────────────────────────────────┐
-│     Production Express Backend (Render / Railway)       │
-│   https://<your-backend-service>.onrender.com           │
+│     Vercel Serverless Express API (api/index.js)        │
+│   https://react-taskboard-rameshwar.vercel.app/api      │
+│   - Routed via vercel.json rewrites (/api/(.*))         │
 │   - Health: GET /api/health (200 OK)                    │
-│   - Host: 0.0.0.0, PORT from process.env.PORT           │
-│   - Restricted CORS: Vercel origin only                 │
+│   - Serverless connection reuse (readyState >= 1)       │
+│   - Production error handling & restricted CORS         │
 └──────────────────────────┬──────────────────────────────┘
                            │
                            │ Mongoose 8 TLS
@@ -197,39 +198,22 @@ npm run lint
 ┌─────────────────────────────────────────────────────────┐
 │              MongoDB Atlas Cloud Cluster                │
 │   - Isolated user collections and user-scoped tasks     │
+│   - Network Access: 0.0.0.0/0 enabled for serverless    │
 └─────────────────────────────────────────────────────────┘
 ```
 
-### 1. Deploying the Backend to Render
+### Vercel Unified Full-Stack Deployment
 
-1. Create a new **Web Service** on [Render](https://render.com) connecting this repository (or apply using the included `render.yaml` blueprint).
-2. Configure service settings:
-   - **Root Directory:** `server`
-   - **Environment:** `Node`
-   - **Build Command:** `npm install`
-   - **Start Command:** `npm start`
-3. Add Environment Variables in Render Dashboard:
-   - `PORT`: `5000` (or leave default assigned by Render)
-   - `NODE_VERSION`: `20.18.0`
+The application deploys both the React single-page application and the Express REST API directly to Vercel:
+
+1. **Routing (`vercel.json`):** Directs `/api/*` to `api/index.js` (Serverless Function) and all remaining paths to `index.html` (React SPA).
+2. **Serverless Function (`api/index.js`):** Exports a handler invoking the Express app with serverless connection pooling via `mongoose.connection.readyState`.
+3. **Environment Variables in Vercel:**
+   - `VITE_API_BASE_URL`: `/api`
    - `MONGODB_URI`: `mongodb+srv://<username>:<password>@<cluster>.mongodb.net/taskboard?retryWrites=true&w=majority`
    - `JWT_SECRET`: `<secure-random-secret-key>`
    - `JWT_EXPIRES_IN`: `7d`
-   - `CLIENT_ORIGIN`: `https://react-taskboard-rameshwar.vercel.app,http://localhost:5173`
-4. Deploy service and verify health:
-   ```bash
-   curl -I https://<your-backend-service>.onrender.com/api/health
-   # Returns: HTTP/2 200 OK
-   ```
-
-### 2. Connecting Vercel Frontend to Backend
-
-1. In the **Vercel Dashboard**, open project **react-taskboard-rameshwar**.
-2. Navigate to **Settings** > **Environment Variables**.
-3. Add environment variable:
-   - **Key:** `VITE_API_BASE_URL`
-   - **Value:** `https://<your-backend-service>.onrender.com/api` (no trailing slash)
-   - **Environment:** Production (and Preview/Development if desired)
-4. Trigger a redeployment from **Deployments** > **Redeploy** to inline the production API URL into the client bundle.
+4. **Deploy:** Push changes to GitHub (`git push origin main`), and Vercel automatically deploys both the frontend and API.
 
 ---
 
