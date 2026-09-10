@@ -9,7 +9,7 @@ function getApiBaseUrl() {
     console.error('FATAL: VITE_API_BASE_URL environment variable is not defined.');
     throw new Error('Configuration error: VITE_API_BASE_URL environment variable is not defined.');
   }
-  return url;
+  return url.replace(/\/+$/, '');
 }
 
 /**

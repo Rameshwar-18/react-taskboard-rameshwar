@@ -51,4 +51,15 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 
+// Global production-safe error handler (prevents leaking stack traces or credentials)
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
+  const isCorsError = err.message && err.message.includes('CORS');
+  const status = isCorsError ? 403 : err.status || 500;
+  res.status(status).json({
+    success: false,
+    message: isCorsError ? 'CORS error: Origin not allowed' : 'Internal server error'
+  });
+});
+
 export default app;

@@ -173,11 +173,86 @@ npm run build
 npm run lint
 ```
 
+## Production Deployment & Architecture
+
+```
+┌─────────────────────────────────────────────────────────┐
+│        Vercel React Frontend (HTTPS)                    │
+│   https://react-taskboard-rameshwar.vercel.app          │
+└──────────────────────────┬──────────────────────────────┘
+                           │
+                           │ HTTPS requests (Bearer JWT)
+                           │ VITE_API_BASE_URL
+                           ▼
+┌─────────────────────────────────────────────────────────┐
+│     Production Express Backend (Render / Railway)       │
+│   https://<your-backend-service>.onrender.com           │
+│   - Health: GET /api/health (200 OK)                    │
+│   - Host: 0.0.0.0, PORT from process.env.PORT           │
+│   - Restricted CORS: Vercel origin only                 │
+└──────────────────────────┬──────────────────────────────┘
+                           │
+                           │ Mongoose 8 TLS
+                           ▼
+┌─────────────────────────────────────────────────────────┐
+│              MongoDB Atlas Cloud Cluster                │
+│   - Isolated user collections and user-scoped tasks     │
+└─────────────────────────────────────────────────────────┘
+```
+
+### 1. Deploying the Backend to Render
+
+1. Create a new **Web Service** on [Render](https://render.com) connecting this repository (or apply using the included `render.yaml` blueprint).
+2. Configure service settings:
+   - **Root Directory:** `server`
+   - **Environment:** `Node`
+   - **Build Command:** `npm install`
+   - **Start Command:** `npm start`
+3. Add Environment Variables in Render Dashboard:
+   - `PORT`: `5000` (or leave default assigned by Render)
+   - `NODE_VERSION`: `20.18.0`
+   - `MONGODB_URI`: `mongodb+srv://<username>:<password>@<cluster>.mongodb.net/taskboard?retryWrites=true&w=majority`
+   - `JWT_SECRET`: `<secure-random-secret-key>`
+   - `JWT_EXPIRES_IN`: `7d`
+   - `CLIENT_ORIGIN`: `https://react-taskboard-rameshwar.vercel.app,http://localhost:5173`
+4. Deploy service and verify health:
+   ```bash
+   curl -I https://<your-backend-service>.onrender.com/api/health
+   # Returns: HTTP/2 200 OK
+   ```
+
+### 2. Connecting Vercel Frontend to Backend
+
+1. In the **Vercel Dashboard**, open project **react-taskboard-rameshwar**.
+2. Navigate to **Settings** > **Environment Variables**.
+3. Add environment variable:
+   - **Key:** `VITE_API_BASE_URL`
+   - **Value:** `https://<your-backend-service>.onrender.com/api` (no trailing slash)
+   - **Environment:** Production (and Preview/Development if desired)
+4. Trigger a redeployment from **Deployments** > **Redeploy** to inline the production API URL into the client bundle.
+
+---
+
+## Production Testing & Verification
+
+```bash
+# Run 49 live backend assertions (Health, CORS, Auth, Task CRUD, Isolation, MongoDB)
+cd server
+npm test
+
+# Build frontend production bundle
+cd ..
+npm run build
+
+# Run linter
+npm run lint
+```
+
 ---
 
 ## Known Limitations
 
 1. **No Refresh Tokens:** By design for this stage of the project, authentication relies on standard single-token JWTs stored in `localStorage`. When the JWT expires (or if the secret changes), the frontend handles the resulting `401 Unauthorized` by clearing the session and redirecting the user to `/login`. Refresh token rotation is not implemented.
-2. **Backend Cloud Deployment Pending:** The Node.js Express server runs locally by default (`http://localhost:5000`). While the frontend is deployed to Vercel, the production Vercel frontend requires `VITE_API_BASE_URL` to be configured in Vercel Project Settings pointing to a deployed backend instance (e.g., on Render or Railway).
+2. **Manual Dashboard Action Required:** Deploying to Render and configuring `VITE_API_BASE_URL` on Vercel require setting sensitive credentials in the cloud provider dashboards.
 3. **No Task Pagination:** All tasks owned by the authenticated user are retrieved in a single request ordered by `createdAt` descending. For enterprise workloads with thousands of tasks, cursor-based pagination would be a recommended future enhancement.
 
